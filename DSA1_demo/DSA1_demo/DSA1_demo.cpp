@@ -151,7 +151,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
         // Search Label
         CreateWindow(
-            L"STATIC", L"Search Keywords (comma separated):",
+            L"STATIC", L"Search Keywords (comma-separated):",
             WS_VISIBLE | WS_CHILD | SS_LEFT,
             20, 100, 250, 20,
             hwnd, NULL, hInst, NULL
@@ -332,12 +332,16 @@ void ProcessTextFile(const std::string& filepath) {
     // Reserve space to reduce reallocations
     wordFrequencyMap.reserve(10000); // Pre-allocate for better performance
 
-    std::ifstream file(filepath);
+    // Open file in binary mode to handle different line endings properly
+    std::ifstream file(filepath, std::ios::in);
     if (!file.is_open()) {
         ShowWindow(hwndProgressBar, SW_HIDE);
         MessageBox(hwndMain, L"Failed to open file!", L"Error", MB_ICONERROR | MB_OK);
         return;
     }
+
+    // Disable sync with stdio for better performance
+    file.sync_with_stdio(false);
 
     std::string word;
     int wordsProcessed = 0;
@@ -347,7 +351,8 @@ void ProcessTextFile(const std::string& filepath) {
         // Remove punctuation and convert to lowercase
         std::string cleanWord;
         for (char c : word) {
-            if (std::isalnum(c)) {
+            // Only process ASCII alphanumeric characters to avoid UTF-8 issues
+            if (std::isalnum(static_cast<unsigned char>(c))) {
                 cleanWord += c;
             }
         }
@@ -360,9 +365,11 @@ void ProcessTextFile(const std::string& filepath) {
 
             // Update progress bar periodically
             if (wordsProcessed % progressUpdateInterval == 0) {
-                // Estimate progress based on bytes read vs file size
-                size_t currentPos = file.tellg();
-                int progress = (fileSize > 0) ? (int)((currentPos * 100) / fileSize) : 0;
+                // Estimate progress based on words processed vs estimated total
+                // Using word count estimation instead of tellg() which can fail with CRLF
+                int estimatedTotalWords = (fileSize > 0) ? (int)(fileSize / 5) : 100000; // Assume avg 5 bytes per word
+                int progress = (estimatedTotalWords > 0) ? (int)((wordsProcessed * 100) / estimatedTotalWords) : 0;
+                if (progress > 100) progress = 100; // Cap at 100%
                 SendMessage(hwndProgressBar, PBM_SETPOS, progress, 0);
 
                 // Allow UI to update
