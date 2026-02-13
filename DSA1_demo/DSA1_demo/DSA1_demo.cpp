@@ -3,6 +3,16 @@
 
 #include "framework.h"
 #include "DSA1_demo.h"
+#include "LRUCache.h"
+#include <string>
+#include <sstream>
+
+// Global cache instance
+LRUCache* g_cache = nullptr;
+
+// Control handles
+HWND hKeyInput, hValueInput, hGetButton, hPutButton, hClearButton;
+HWND hCacheDisplay, hStatsDisplay;
 
 #define MAX_LOADSTRING 100
 
@@ -95,20 +105,83 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-   hInst = hInstance; // Store instance handle in our global variable
+    hInst = hInstance;
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+    HWND hWnd = CreateWindowW(szWindowClass, L"LRU Cache Visualizer",
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, 0, 800, 600, nullptr, nullptr, hInstance, nullptr);
 
-   if (!hWnd)
-   {
-      return FALSE;
-   }
+    if (!hWnd)
+    {
+        return FALSE;
+    }
 
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
+    // Initialize cache with capacity 5
+    g_cache = new LRUCache(5);
 
-   return TRUE;
+    // Create GUI controls
+    // Labels
+    CreateWindowW(L"STATIC", L"Key (Page ID):", WS_VISIBLE | WS_CHILD,
+        20, 20, 120, 20, hWnd, nullptr, hInstance, nullptr);
+
+    CreateWindowW(L"STATIC", L"Value (Page Name):", WS_VISIBLE | WS_CHILD,
+        20, 50, 140, 20, hWnd, nullptr, hInstance, nullptr);
+
+    // Input fields
+    hKeyInput = CreateWindowW(L"EDIT", L"", WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER,
+        160, 20, 100, 20, hWnd, nullptr, hInstance, nullptr);
+
+    hValueInput = CreateWindowW(L"EDIT", L"", WS_VISIBLE | WS_CHILD | WS_BORDER,
+        160, 50, 200, 20, hWnd, nullptr, hInstance, nullptr);
+
+    // Buttons
+    hPutButton = CreateWindowW(L"BUTTON", L"PUT (Add to Cache)", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+        20, 90, 150, 30, hWnd, (HMENU)1001, hInstance, nullptr);
+
+    hGetButton = CreateWindowW(L"BUTTON", L"GET (Lookup)", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+        180, 90, 150, 30, hWnd, (HMENU)1002, hInstance, nullptr);
+
+    hClearButton = CreateWindowW(L"BUTTON", L"Clear Cache", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+        340, 90, 120, 30, hWnd, (HMENU)1003, hInstance, nullptr);
+
+    // Display areas
+    CreateWindowW(L"STATIC", L"Cache State (Most Recent First):", WS_VISIBLE | WS_CHILD,
+        20, 140, 300, 20, hWnd, nullptr, hInstance, nullptr);
+
+    hCacheDisplay = CreateWindowW(L"LISTBOX", L"",
+        WS_VISIBLE | WS_CHILD | WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
+        20, 165, 440, 200, hWnd, nullptr, hInstance, nullptr);
+
+    hStatsDisplay = CreateWindowW(L"STATIC", L"Stats: Hits: 0 | Misses: 0 | Size: 0/5",
+        WS_VISIBLE | WS_CHILD,
+        20, 380, 440, 40, hWnd, nullptr, hInstance, nullptr);
+
+    ShowWindow(hWnd, nCmdShow);
+    UpdateWindow(hWnd);
+
+    return TRUE;
+}
+
+
+void UpdateDisplay(HWND hWnd) {
+    // Clear listbox
+    SendMessage(hCacheDisplay, LB_RESETCONTENT, 0, 0);
+
+    // Get current cache state
+    auto state = g_cache->getCurrentState();
+
+    for (const auto& item : state) {
+        wstringstream wss;
+        wss << L"Page " << item.first << L": " << wstring(item.second.begin(), item.second.end());
+        SendMessage(hCacheDisplay, LB_ADDSTRING, 0, (LPARAM)wss.str().c_str());
+    }
+
+    // Update stats
+    wstringstream statText;
+    statText << L"Stats: Hits: " << g_cache->getHitCount()
+        << L" | Misses: " << g_cache->getMissCount()
+        << L" | Size: " << g_cache->getSize() << L"/" << g_cache->getCapacity();
+    SetWindowTextW(hStatsDisplay, statText.str().c_str());
 }
 
 //
@@ -126,11 +199,65 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_COMMAND:
-        {
+    {
             int wmId = LOWORD(wParam);
-            // Parse the menu selections:
             switch (wmId)
             {
+            case 1001: // PUT button
+            {
+                WCHAR keyBuf[100], valueBuf[256];
+                GetWindowTextW(hKeyInput, keyBuf, 100);
+                GetWindowTextW(hValueInput, valueBuf, 256);
+
+                int key = _wtoi(keyBuf);
+                wstring wValue(valueBuf);
+                string value(wValue.begin(), wValue.end());
+
+                if (key > 0 && !value.empty()) {
+                    g_cache->put(key, value);
+                    UpdateDisplay(hWnd);
+
+                    // Clear inputs
+                    SetWindowTextW(hKeyInput, L"");
+                    SetWindowTextW(hValueInput, L"");
+                }
+                else {
+                    MessageBoxW(hWnd, L"Please enter valid key and value", L"Error", MB_OK);
+                }
+            }
+            break;
+
+            case 1002: // GET button
+            {
+                WCHAR keyBuf[100];
+                GetWindowTextW(hKeyInput, keyBuf, 100);
+                int key = _wtoi(keyBuf);
+
+                if (key > 0) {
+                    string result = g_cache->get(key);
+                    wstring wResult(result.begin(), result.end());
+
+                    if (result == "MISS") {
+                        MessageBoxW(hWnd, L"Cache MISS - Page not in cache!", L"Result", MB_OK | MB_ICONWARNING);
+                    }
+                    else {
+                        wstring msg = L"Cache HIT!\nPage: " + wResult;
+                        MessageBoxW(hWnd, msg.c_str(), L"Result", MB_OK | MB_ICONINFORMATION);
+                    }
+
+                    UpdateDisplay(hWnd);
+                }
+                else {
+                    MessageBoxW(hWnd, L"Please enter a valid key", L"Error", MB_OK);
+                }
+            }
+            break;
+
+            case 1003: // Clear button
+                g_cache->clear();
+                UpdateDisplay(hWnd);
+                break;
+
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
@@ -141,7 +268,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 return DefWindowProc(hWnd, message, wParam, lParam);
             }
         }
-        break;
+    break;
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
@@ -151,6 +278,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     case WM_DESTROY:
+        delete g_cache;
         PostQuitMessage(0);
         break;
     default:
