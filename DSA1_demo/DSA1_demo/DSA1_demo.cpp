@@ -204,7 +204,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         ListView_InsertColumn(hwndResultList, 1, &lvc);
 
         lvc.iSubItem = 2;
-        lvc.pszText = (LPWSTR)L"Lookup Time (us)";
+        lvc.pszText = (LPWSTR)L"Lookup Time (nanosecond)";
         lvc.cx = 180;
         ListView_InsertColumn(hwndResultList, 2, &lvc);
 
@@ -458,7 +458,7 @@ void SearchWords(HWND hwnd) {
         auto it = wordFrequencyMap.find(kw);
 
         auto endTime = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime);
 
         LVITEM lvi;
         ZeroMemory(&lvi, sizeof(lvi));
@@ -483,9 +483,7 @@ void SearchWords(HWND hwnd) {
 
         // Lookup time column
         lvi.iSubItem = 2;
-        std::wostringstream timeStr;
-        timeStr << std::fixed << std::setprecision(3) << duration.count();
-        std::wstring timeString = timeStr.str();
+        std::wstring timeString = std::to_wstring(duration.count());
         ListView_SetItemText(hwndResultList, itemIndex, 2, const_cast<wchar_t*>(timeString.c_str()));
 
         // Status column
@@ -501,6 +499,6 @@ void SearchWords(HWND hwnd) {
     }
 
     std::ostringstream status;
-    status << "Searched " << keywords.size() << " keyword(s). Average lookup time: O(1) constant time";
+    status << "Searched " << keywords.size() << " keyword(s). Lookup time precision: nanoseconds (O(1) constant time)";
     SetWindowText(hwndStatusBar, StringToWString(status.str()).c_str());
 }
