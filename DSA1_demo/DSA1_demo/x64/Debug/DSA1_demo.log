@@ -1,2 +1,43 @@
 ﻿  DSA1_demo.cpp
+C:\Users\lolpi\OneDrive\Documents\GitHub\DSA1\DSA1_demo\DSA1_demo\LRUCache.h(52,48): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'DSA1_demo.cpp')
+  
+C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\xutility(4924,18): warning C4244: '=': conversion from 'wchar_t' to 'char', possible loss of data
+  (compiling source file 'DSA1_demo.cpp')
+      C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\xutility(4924,18):
+      the template instantiation context (the oldest one first) is
+          C:\Users\lolpi\OneDrive\Documents\GitHub\DSA1\DSA1_demo\DSA1_demo\DSA1_demo.cpp(256,29):
+          see reference to function template instantiation 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)' being compiled
+          with
+          [
+              _Elem=wchar_t,
+              _Iter=std::_String_iterator<std::_String_val<std::_Simple_types<wchar_t>>>,
+              _Alloc=std::allocator<char>
+          ]
+              C:\Users\lolpi\OneDrive\Documents\GitHub\DSA1\DSA1_demo\DSA1_demo\DSA1_demo.cpp(256,29):
+              see the first reference to 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string' in 'WndProc'
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\xstring(862,17):
+          see reference to function template instantiation 'void std::basic_string<char,std::char_traits<char>,std::allocator<char>>::_Construct_from_iter<wchar_t*,wchar_t*,_Size_type>(_Iter,const _Sent,_Size)' being compiled
+          with
+          [
+              _Size_type=unsigned __int64,
+              _Iter=wchar_t *,
+              _Sent=wchar_t *,
+              _Size=unsigned __int64
+          ]
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\xstring(1018,18):
+          see reference to function template instantiation '_OutIt *std::_Copy_n_unchecked4<wchar_t*,_Size,char*>(_InIt,_SizeTy,_OutIt)' being compiled
+          with
+          [
+              _OutIt=char *,
+              _Size=unsigned __int64,
+              _InIt=wchar_t *,
+              _SizeTy=unsigned __int64
+          ]
+  
+  LRUCache.cpp
+C:\Users\lolpi\OneDrive\Documents\GitHub\DSA1\DSA1_demo\DSA1_demo\LRUCache.h(52,48): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'LRUCache.cpp')
+  
+  Generating Code...
   DSA1_demo.vcxproj -> C:\Users\lolpi\OneDrive\Documents\GitHub\DSA1\DSA1_demo\x64\Debug\DSA1_demo.exe

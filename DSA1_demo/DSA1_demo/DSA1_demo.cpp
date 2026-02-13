@@ -1,4 +1,4 @@
-// DSA1_demo.cpp : Defines the entry point for the application.
+﻿// DSA1_demo.cpp : Defines the entry point for the application.
 //
 
 #include "framework.h"
@@ -13,6 +13,9 @@ LRUCache* g_cache = nullptr;
 // Control handles
 HWND hKeyInput, hValueInput, hGetButton, hPutButton, hClearButton;
 HWND hCacheDisplay, hStatsDisplay;
+
+HWND hHashRadio, hTreeRadio, hVectorRadio;
+HWND hBackendLabel, hPerfLabel;
 
 #define MAX_LOADSTRING 100
 
@@ -156,6 +159,37 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
         WS_VISIBLE | WS_CHILD,
         20, 380, 440, 40, hWnd, nullptr, hInstance, nullptr);
 
+    // Backend selection
+    CreateWindowW(L"STATIC", L"Data Structure Backend:", WS_VISIBLE | WS_CHILD,
+        480, 20, 200, 20, hWnd, nullptr, hInstance, nullptr);
+
+    hHashRadio = CreateWindowW(L"BUTTON", L"Hash Table (O(1))",
+        WS_VISIBLE | WS_CHILD | BS_AUTORADIOBUTTON | WS_GROUP,
+        480, 45, 180, 20, hWnd, (HMENU)2001, hInstance, nullptr);
+
+    hTreeRadio = CreateWindowW(L"BUTTON", L"Binary Tree (O(log n))",
+        WS_VISIBLE | WS_CHILD | BS_AUTORADIOBUTTON,
+        480, 70, 180, 20, hWnd, (HMENU)2002, hInstance, nullptr);
+
+    hVectorRadio = CreateWindowW(L"BUTTON", L"Vector (O(n))",
+        WS_VISIBLE | WS_CHILD | BS_AUTORADIOBUTTON,
+        480, 95, 180, 20, hWnd, (HMENU)2003, hInstance, nullptr);
+
+    // Set hash table as default
+    SendMessage(hHashRadio, BM_SETCHECK, BST_CHECKED, 0);
+
+    hBackendLabel = CreateWindowW(L"STATIC", L"Current: Hash Table (unordered_map)",
+        WS_VISIBLE | WS_CHILD,
+        480, 125, 280, 20, hWnd, nullptr, hInstance, nullptr);
+
+    hPerfLabel = CreateWindowW(L"STATIC", L"Avg Access Time: 0.0 μs",
+        WS_VISIBLE | WS_CHILD,
+        480, 150, 280, 20, hWnd, nullptr, hInstance, nullptr);
+
+    // Add benchmark button
+    CreateWindowW(L"BUTTON", L"Run Benchmark", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
+        480, 180, 150, 30, hWnd, (HMENU)1004, hInstance, nullptr);
+
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
 
@@ -182,6 +216,14 @@ void UpdateDisplay(HWND hWnd) {
         << L" | Misses: " << g_cache->getMissCount()
         << L" | Size: " << g_cache->getSize() << L"/" << g_cache->getCapacity();
     SetWindowTextW(hStatsDisplay, statText.str().c_str());
+
+    // Update performance label
+    wstringstream perfText;
+    perfText << L"Avg Access Time: "
+        << fixed << setprecision(2)
+        << g_cache->getAverageAccessTime() << L" μs";
+    SetWindowTextW(hPerfLabel, perfText.str().c_str());
+
 }
 
 //
@@ -264,6 +306,68 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             case IDM_EXIT:
                 DestroyWindow(hWnd);
                 break;
+
+            case 2001: // Hash Table selected
+                g_cache->setBackend(CacheBackend::HASH_TABLE);
+                SetWindowTextW(hBackendLabel, L"Current: Hash Table (unordered_map)");
+                break;
+
+            case 2002: // Binary Tree selected
+                g_cache->setBackend(CacheBackend::BINARY_TREE);
+                SetWindowTextW(hBackendLabel, L"Current: Binary Search Tree (map)");
+                break;
+
+            case 2003: // Vector selected
+                g_cache->setBackend(CacheBackend::LINEAR_SEARCH);
+                SetWindowTextW(hBackendLabel, L"Current: Linear Search (vector)");
+                break;
+
+            case 1004: // Benchmark button
+            {
+                // Save current cache state
+                CacheBackend currentBackend = g_cache->getBackend();
+
+                // Create a fresh cache for benchmarking
+                delete g_cache;
+                g_cache = new LRUCache(50, currentBackend); // Larger capacity for benchmark
+
+                // Run benchmark with current backend
+                auto start = chrono::high_resolution_clock::now();
+
+                for (int i = 0; i < 1000; i++) {
+                    string value = "Page_" + to_string(i);
+                    g_cache->put(i % 100, value);
+                    g_cache->get(i % 50);
+                }
+
+                auto end = chrono::high_resolution_clock::now();
+                auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+
+                // Get backend name
+                string backendName = g_cache->getBackendName();
+                wstring wBackendName(backendName.begin(), backendName.end());
+
+                // Create message
+                wchar_t msg[512];
+                swprintf_s(msg, 512,
+                    L"Benchmark Complete!\n\n"
+                    L"Backend: %s\n"
+                    L"Operations: 1000 PUTs + 1000 GETs\n"
+                    L"Total Time: %lld ms\n"
+                    L"Avg Access Time: %.2f μs",
+                    wBackendName.c_str(),
+                    duration.count(),
+                    g_cache->getAverageAccessTime());
+
+                MessageBoxW(hWnd, msg, L"Benchmark Results", MB_OK | MB_ICONINFORMATION);
+
+                // Reset cache to normal size
+                delete g_cache;
+                g_cache = new LRUCache(5, currentBackend);
+                UpdateDisplay(hWnd);
+            }
+            break;
+            break;
             default:
                 return DefWindowProc(hWnd, message, wParam, lParam);
             }
