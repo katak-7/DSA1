@@ -27,9 +27,15 @@
     <ClInclude Include="DSA1_demo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LRUCache.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DSA1_demo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LRUCache.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
