@@ -37,12 +37,12 @@ void LoadTextFile(HWND hwnd);
 void ProcessTextFile(const std::string& filepath);
 void SearchWords(HWND hwnd);
 std::string ToLower(const std::string& str);
-void UpdateStats();
+//void UpdateStats();
 std::wstring StringToWString(const std::string& str);
 size_t GetFileSize(const std::string& filepath);
 
 // Main entry point
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR lpCmdLine, _In_ int nCmdShow) {
     hInst = hInstance;
 
     // Initialize common controls
