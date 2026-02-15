@@ -14,6 +14,7 @@ This package contains batch scripts to build and run the Word Frequency Analyzer
 4. **DSA1_demo.cpp** - Source code (your main application file)
 
 ## Quick Start
+All bat files are found in **\DSA1\DSA1_demo\DSA1_demo**
 
 ### Building the Application
 1. Double-click **build.bat** or run it from command prompt
@@ -26,10 +27,14 @@ This package contains batch scripts to build and run the Word Frequency Analyzer
 ### Running the Application
 After building, you can run the application by:
 - Double-clicking **run.bat**, or
-- Double-clicking **run_universal.bat** if **run.bat** display error, or
 - Double-clicking **DSA1_demo.exe** directly
 
 ### Cleaning Build Artifacts
 To remove all compiled files and start fresh:
 - Double-click **cleanup.bat**
 - This removes: .exe, .obj, .pdb, .ilk files and build directories
+
+### Using the Application
+1. Load any .txt files from **\DSA1\DSA1_demo\TextFiles**, or add your own
+2. After loading the file, use the search bar to list out the target words(comma-seperated)
+to search for one or more words.

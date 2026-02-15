@@ -1,8 +1,8 @@
 @echo off
 REM ============================================================================
-REM Build Script for Word Frequency Analyzer
-REM Compiles DSA1_demo.cpp using Visual Studio (MSVC) compiler
-REM Compatible with VS 2019, 2022, and newer versions
+REM Universal Build Script for Word Frequency Analyzer
+REM Uses vswhere.exe for automatic Visual Studio detection (all versions)
+REM Falls back to manual search for VS 2022-2030
 REM ============================================================================
 
 setlocal enabledelayedexpansion
@@ -10,6 +10,7 @@ setlocal enabledelayedexpansion
 echo.
 echo ========================================
 echo   Word Frequency Analyzer - Build
+echo   (Universal VS Detector)
 echo ========================================
 echo.
 
@@ -29,69 +30,57 @@ if not exist "%SOURCE_FILE%" (
 
 echo [1/5] Locating Visual Studio installation...
 
-REM Search for Visual Studio 2022-2026 in order of preference (newest first)
-REM Check years 2026 down to 2022, and editions: Enterprise, Professional, Community
-
-set VCVARSALL=
-set VS_VERSION=
-
-REM Check VS 2026
-for %%E in (Enterprise Professional Community) do (
-    if exist "C:\Program Files\Microsoft Visual Studio\2026\%%E\VC\Auxiliary\Build\vcvarsall.bat" (
-        set "VCVARSALL=C:\Program Files\Microsoft Visual Studio\2026\%%E\VC\Auxiliary\Build\vcvarsall.bat"
-        set VS_VERSION=2026 %%E
-        goto :found_vs
+REM Method 1: Try using vswhere.exe (official Microsoft tool, most reliable)
+set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+if exist "%VSWHERE%" (
+    echo [INFO] Using vswhere.exe for automatic detection...
+    
+    REM Find latest VS installation with C++ tools
+    for /f "usebackq tokens=*" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
+        set "VS_INSTALL_PATH=%%i"
+    )
+    
+    if defined VS_INSTALL_PATH (
+        set "VCVARSALL=!VS_INSTALL_PATH!\VC\Auxiliary\Build\vcvarsall.bat"
+        
+        REM Get VS version info
+        for /f "usebackq tokens=*" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property displayName`) do (
+            set "VS_VERSION=%%i"
+        )
+        
+        if exist "!VCVARSALL!" (
+            echo [SUCCESS] Found: !VS_VERSION!
+            goto :found_vs
+        )
     )
 )
 
-REM Check VS 2025
-for %%E in (Enterprise Professional Community) do (
-    if exist "C:\Program Files\Microsoft Visual Studio\2025\%%E\VC\Auxiliary\Build\vcvarsall.bat" (
-        set "VCVARSALL=C:\Program Files\Microsoft Visual Studio\2025\%%E\VC\Auxiliary\Build\vcvarsall.bat"
-        set VS_VERSION=2025 %%E
-        goto :found_vs
+echo [INFO] vswhere.exe not available, using manual detection...
+
+REM Method 2: Manual search for VS 2022-2030 (future-proof)
+REM Search newest to oldest
+for %%Y in (2030 2029 2028 2027 2026 2025 2024 2023 2022) do (
+    for %%E in (Enterprise Professional Community) do (
+        if exist "C:\Program Files\Microsoft Visual Studio\%%Y\%%E\VC\Auxiliary\Build\vcvarsall.bat" (
+            set "VCVARSALL=C:\Program Files\Microsoft Visual Studio\%%Y\%%E\VC\Auxiliary\Build\vcvarsall.bat"
+            set VS_VERSION=%%Y %%E
+            echo [SUCCESS] Found Visual Studio %%Y %%E
+            goto :found_vs
+        )
     )
 )
 
-REM Check VS 2024
-for %%E in (Enterprise Professional Community) do (
-    if exist "C:\Program Files\Microsoft Visual Studio\2024\%%E\VC\Auxiliary\Build\vcvarsall.bat" (
-        set "VCVARSALL=C:\Program Files\Microsoft Visual Studio\2024\%%E\VC\Auxiliary\Build\vcvarsall.bat"
-        set VS_VERSION=2024 %%E
-        goto :found_vs
-    )
-)
-
-REM Check VS 2023
-for %%E in (Enterprise Professional Community) do (
-    if exist "C:\Program Files\Microsoft Visual Studio\2023\%%E\VC\Auxiliary\Build\vcvarsall.bat" (
-        set "VCVARSALL=C:\Program Files\Microsoft Visual Studio\2023\%%E\VC\Auxiliary\Build\vcvarsall.bat"
-        set VS_VERSION=2023 %%E
-        goto :found_vs
-    )
-)
-
-REM Check VS 2022
-for %%E in (Enterprise Professional Community) do (
-    if exist "C:\Program Files\Microsoft Visual Studio\2022\%%E\VC\Auxiliary\Build\vcvarsall.bat" (
-        set "VCVARSALL=C:\Program Files\Microsoft Visual Studio\2022\%%E\VC\Auxiliary\Build\vcvarsall.bat"
-        set VS_VERSION=2022 %%E
-        goto :found_vs
-    )
-)
-
-REM If not found, error out
+REM If still not found, error out
 echo [ERROR] Visual Studio not found!
 echo.
 echo Please install Visual Studio 2022 or newer with C++ build tools.
-echo Supported versions: 2022, 2023, 2024, 2025, 2026
+echo Required component: Desktop development with C++
 echo Download from: https://visualstudio.microsoft.com/downloads/
+echo.
 pause
 exit /b 1
 
 :found_vs
-
-echo [SUCCESS] Found Visual Studio %VS_VERSION%
 echo.
 
 REM Setup Visual Studio environment
@@ -99,6 +88,8 @@ echo [2/5] Setting up build environment...
 call "%VCVARSALL%" x64 >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Failed to setup Visual Studio environment!
+    echo.
+    echo Make sure the "Desktop development with C++" workload is installed.
     pause
     exit /b 1
 )
