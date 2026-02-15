@@ -3,11 +3,15 @@
 ## Overview
 This package contains batch scripts to build and run the Word Frequency Analyzer Windows application
 
+## Requirements
+- Windows Operating System
+- Visual Studio 2022, 2023, 2024, 2025, or 2026 with C++ build tools installed
+
 ## Files Included
 1. **build.bat** - Main build script that compiles the application
 2. **run.bat** - Simple launcher to run the compiled application
 3. **cleanup.bat** - Removes all build artifacts and temporary files
-4. **DSA1_demo.cpp** - Source code (main application file)
+4. **DSA1_demo.cpp** - Source code (your main application file)
 
 ## Quick Start
 
@@ -22,6 +26,7 @@ This package contains batch scripts to build and run the Word Frequency Analyzer
 ### Running the Application
 After building, you can run the application by:
 - Double-clicking **run.bat**, or
+- Double-clicking **run_universal.bat** if **run.bat** display error, or
 - Double-clicking **DSA1_demo.exe** directly
 
 ### Cleaning Build Artifacts
